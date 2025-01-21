@@ -1,0 +1,97 @@
+spring:
+  application:
+    name: apigateway-server
+  cloud:
+    discovery:
+      enabled: true
+    gateway:
+      routes:
+        - id: ms-books-catalogue-service
+          uri: lb://ms-books-catalogue-service
+          predicates:
+            - Path=/api/ms-books-catalogue/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-books-catalogue
+                statusCodes: 500
+                fallbackUri: forward:/api/items/items/detail/2/quantity/3
+            - StripPrefix=2
+            - name: UnirFilter
+              args:
+                message: Hello! my custom message
+                cookieName: user
+                cookieValue: JhonRoberth
+        - id: item-service
+          uri: lb://item-service
+          predicates:
+            - Path=/api/items/**
+          filters:
+            - StripPrefix=2
+            - AddRequestHeader=token-request,123456
+            - AddResponseHeader=token-response,12345678
+            - SetResponseHeader=Content-Type,text/plain
+            - AddRequestParameter=nombre, andres
+        - id: book-service
+          uri: lb://book-service
+          predicates:
+            - Path=/api/books/**
+          filters:
+            - StripPrefix=2
+        - id: rating-service
+          uri: lb://rating-service
+          predicates:
+            - Path=/api/rating/**
+          filters:
+            - StripPrefix=2
+        - id: users-service
+          uri: lb://users-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=2
+        - id: oauth-service
+          uri: lb://oauth-service
+          predicates:
+            - Path=/api/security/**
+          filters:
+            - StripPrefix=2
+        - id: client-app
+          uri: lb://client-app
+          predicates:
+            - Path=/api/client/**
+          filters:
+            - StripPrefix=2
+
+server:
+  port: 8090
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  #instance:
+   # prefer-ip-address: true
+   # hostname: localhost
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      defecto:
+        registerHealthIndicator: true
+        slidingWindowSize: 8
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 5
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 2s
+    instances:
+      ms-books-catalogue:
+        baseConfig: defecto
+  timeLimiter:
+    configs:
+      defecto:
+        timeoutDuration: 3s
+    instances:
+      ms-books-catalogue:
+        baseConfig: defecto

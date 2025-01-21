@@ -5,7 +5,7 @@ plugins {
 	id 'maven-publish'
 }
 
-group = 'com.udemy.microservices'
+group = 'com.unir.ms'
 version = '0.0.1-SNAPSHOT'
 
 java {
